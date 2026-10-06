@@ -35,6 +35,9 @@ nvcc -std=c++17 -O3 -arch=sm_86 -I include cuda/vector_add_bench.cu -o /tmp/vect
 /tmp/vector_add_bench 1048576 100
 /tmp/vector_add_bench 257 100
 compute-sanitizer --tool memcheck /tmp/vector_add_bench 65537 10
+nvcc -std=c++17 -O3 -arch=sm_86 -I include cuda/reduction_bench.cu -o /tmp/reduction_bench
+/tmp/reduction_bench 1048576 100
+compute-sanitizer --tool memcheck /tmp/reduction_bench 65537 10
 ```
 
 Alternatively configure CMake with `-DKERNEL_LAB_CUDA=ON` and
@@ -67,6 +70,16 @@ driver/runtime versions and NVCC major/minor. Record the exact build command,
 Defaults: 1048576 elements, 100 timed launches. Sizes are bounded at 16777216,
 repeats at 1–10000. Zero size skips allocation and launch.
 
+The reduction benchmark performs a first float-to-double block reduction followed
+by double partial-sum reductions until one value remains. Each thread consumes two
+elements per iteration and uses grid-stride coverage, so capped grid sizes still
+cover the entire input. Its event interval includes every kernel in each reduction
+but excludes allocation, host/device transfer and verification. Deterministic
+dyadic inputs make the expected sum exactly representable in double, allowing an
+exact correctness check despite parallel ordering. This is not a claim of exact
+summation for arbitrary floats. No bandwidth or speedup is reported before GPU
+validation.
+
 Methodology reference: [NVIDIA CUDA C++ Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html),
 especially timing, effective bandwidth and CUDA error checking. No third-party
 source code or assets were incorporated.
@@ -84,8 +97,21 @@ source code or assets were incorporated.
 - NVCC compilation, GPU correctness, compute-sanitizer and all GPU measurements
   are pending: no NVCC or GPU tooling is available in this environment.
 
-Next CUDA milestone: add a bounds-safe GPU reduction, compare it with the double
-CPU oracle using a documented tolerance, and validate vector-add/reduction on an
-actual GPU when free runtime access becomes available. Next portfolio session:
-establish the self-contained VisionTrack-NN baseline; C++ MLP/XOR is already
-published, with model save/load remaining as its next extension.
+## Reduction milestone — October 6, 2026
+
+- Added a separate CPU oracle stress test across 19 sizes through 1000003 values,
+  cancellation and IEEE infinity/NaN propagation.
+- Added a bounds-safe multi-stage CUDA reduction with double accumulation, checked
+  API/kernel launches, edge-size validation, warmup and full reduction timing.
+- GCC 13.3.0 strict-warning builds passed for both CPU test binaries and the demo.
+  Both CPU tests passed AddressSanitizer/UndefinedBehaviorSanitizer with leak
+  detection disabled because process inspection remains blocked here.
+- CMake/CTest was unavailable locally. NVCC, GPU execution and compute-sanitizer
+  remain unavailable and unvalidated; no GPU result is claimed here. CPU CI covers
+  CMake/CTest and sanitizers, and its result must be checked after publication.
+
+Next CUDA milestone: validate vector-add and reduction with NVCC,
+compute-sanitizer and an actual GPU when free runtime access becomes available,
+then implement tiled matrix multiplication. Next portfolio rotation: numeric MLP
+save/load in `cpp-autograd-engine`, followed by vision baseline serialization and
+PGM inference.
