@@ -1,7 +1,7 @@
 # Kernel lab foundation
 
-Original educational C++17 CPU references and an optional CUDA vector-add
-benchmark. The existing root README is preserved. No downloaded data or external
+Original educational C++17 CPU references and optional CUDA vector-add,
+reduction and tiled-matrix benchmarks. The existing root README is preserved. No downloaded data or external
 CPU dependencies are required.
 
 ## CPU setup and demo
@@ -38,16 +38,23 @@ compute-sanitizer --tool memcheck /tmp/vector_add_bench 65537 10
 nvcc -std=c++17 -O3 -arch=sm_86 -I include cuda/reduction_bench.cu -o /tmp/reduction_bench
 /tmp/reduction_bench 1048576 100
 compute-sanitizer --tool memcheck /tmp/reduction_bench 65537 10
+nvcc -std=c++17 -O3 -arch=sm_86 -I include cuda/tiled_matmul_bench.cu -o /tmp/tiled_matmul_bench
+/tmp/tiled_matmul_bench 512 512 512 100
+/tmp/tiled_matmul_bench 17 9 23 10
+compute-sanitizer --tool memcheck /tmp/tiled_matmul_bench 31 7 33 1
 ```
 
 Alternatively configure CMake with `-DKERNEL_LAB_CUDA=ON` and
-`-DCMAKE_CUDA_ARCHITECTURES=86`, then run `./build/vector_add_bench`.
+`-DCMAKE_CUDA_ARCHITECTURES=86`, then run `./build/vector_add_bench`,
+`./build/reduction_bench` or `./build/tiled_matmul_bench`.
 
 ## Architecture and measurement scope
 
 `reference.hpp` returns a new vector for elementwise addition, rejecting unequal
 lengths. Reduction accumulates float inputs in double; the empty sum is zero.
-It is a correctness oracle, not a promise of exact summation for all inputs.
+Rectangular row-major matrix multiplication also accumulates in double before
+rounding each output to float, with checked dimensions and storage shapes. These
+are correctness oracles, not promises of exact real-number arithmetic.
 
 The CUDA kernel uses bounds-checked grid-stride indexing with 256 threads per
 block. The executable checks 12 sizes around warp/block boundaries, including
@@ -80,6 +87,15 @@ exact correctness check despite parallel ordering. This is not a claim of exact
 summation for arbitrary floats. No bandwidth or speedup is reported before GPU
 validation.
 
+The matrix benchmark uses 16x16 shared-memory tiles and zero-fills partial tiles,
+so arbitrary rectangular dimensions are bounds safe. It verifies shapes below,
+at and above the tile boundary before timing the requested shape. Verification
+uses a documented absolute/relative tolerance against the double-accumulating CPU
+oracle because the float kernel has a different summation order. Ten warmups
+precede CUDA-event timing of kernel launches only; allocation, transfers and CPU
+verification are excluded. Reported arithmetic GFLOP/s uses the conventional
+`2*M*K*N` operation count and is not an end-to-end application rate.
+
 Methodology reference: [NVIDIA CUDA C++ Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html),
 especially timing, effective bandwidth and CUDA error checking. No third-party
 source code or assets were incorporated.
@@ -110,8 +126,26 @@ source code or assets were incorporated.
   remain unavailable and unvalidated; no GPU result is claimed here. CPU CI covers
   CMake/CTest and sanitizers, and its result must be checked after publication.
 
-Next CUDA milestone: validate vector-add and reduction with NVCC,
-compute-sanitizer and an actual GPU when free runtime access becomes available,
-then implement tiled matrix multiplication. Next portfolio rotation: numeric MLP
-save/load in `cpp-autograd-engine`, followed by vision baseline serialization and
-PGM inference.
+The vector-add and reduction implementations still require NVCC,
+compute-sanitizer and actual-GPU validation when a free runtime becomes available.
+The subsequent numeric MLP save/load and vision serialization/PGM portfolio
+rotations were completed before the matrix-multiplication milestone below.
+
+## Tiled matrix multiplication milestone — October 8, 2026
+
+- Added a rectangular CPU oracle with double accumulation, dimension-overflow and
+  storage-shape checks. CPU tests cover 11 shapes including empty dimensions and
+  sizes 15, 16 and 17 around the CUDA tile boundary.
+- Added an optional bounds-safe 16x16 shared-memory CUDA kernel, deterministic
+  edge-shape checks, warmup, kernel-only event timing and hardware/toolchain
+  metadata. No CUDA performance result is recorded without actual GPU execution.
+- GCC 13.3.0 strict-warning builds passed for all three CPU tests and the demo.
+  AddressSanitizer/UndefinedBehaviorSanitizer passed for all CPU tests with leak
+  detection disabled consistently with the earlier environment limitation.
+- CMake/CTest was unavailable locally and is delegated to CPU CI. NVCC,
+  compute-sanitizer, GPU correctness and measurements remain pending because no
+  CUDA compiler or NVIDIA GPU tooling was available; no GPU result is claimed.
+
+Next portfolio milestone: add reproducible physics-state tests and a headless
+simulation path alongside the existing pendulum visualization. CUDA runtime
+validation remains queued for the first available free NVIDIA environment.

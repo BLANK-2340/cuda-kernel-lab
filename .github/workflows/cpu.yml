@@ -13,3 +13,5 @@ jobs:
           /tmp/reference_test
           g++ -std=c++17 -Wall -Wextra -Werror -pedantic -fsanitize=address,undefined -I include tests/reduction_test.cpp -o /tmp/reduction_test
           /tmp/reduction_test
+          g++ -std=c++17 -Wall -Wextra -Werror -pedantic -fsanitize=address,undefined -I include tests/matmul_test.cpp -o /tmp/matmul_test
+          /tmp/matmul_test
