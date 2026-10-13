@@ -15,3 +15,26 @@ jobs:
           /tmp/reduction_test
           g++ -std=c++17 -Wall -Wextra -Werror -pedantic -fsanitize=address,undefined -I include tests/matmul_test.cpp -o /tmp/matmul_test
           /tmp/matmul_test
+          g++ -std=c++17 -Wall -Wextra -Werror -pedantic -fsanitize=address,undefined -I include tests/benchmark_test.cpp -o /tmp/benchmark_test
+          /tmp/benchmark_test
+      - name: Validate CPU benchmark JSON
+        run: |
+          ./build/cpu_benchmark --warmup 1 --iterations 2 --vector-size 257 --matrix-size 17 --output /tmp/cpu-benchmark.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("/tmp/cpu-benchmark.json").read_text())
+          assert report["schema_version"] == 1
+          assert report["runtime"] == "cpu"
+          assert report["correctness_verified"] is True
+          assert report["methodology"]["warmup_iterations"] == 1
+          assert report["methodology"]["measured_iterations"] == 2
+          assert report["benchmarks"]["vector_add"]["elements"] == 257
+          assert report["benchmarks"]["reduction"]["elements"] == 257
+          matrix = report["benchmarks"]["matrix_multiply"]
+          assert (matrix["rows"], matrix["inner"], matrix["columns"]) == (17, 17, 17)
+          for result in report["benchmarks"].values():
+              for key in ("minimum_ms", "median_ms", "mean_ms", "maximum_ms"):
+                  assert isinstance(result[key], (int, float)) and result[key] >= 0
+          PY

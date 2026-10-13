@@ -24,6 +24,31 @@ g++ -std=c++17 -Wall -Wextra -Werror -pedantic -I include examples/cpu_demo.cpp 
 
 Demo output: `5 7 9`, followed by `sum = 21`.
 
+## Reproducible CPU benchmark report
+
+Build in Release mode for measurements, then run the dependency-free benchmark:
+
+```sh
+cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release
+cmake --build build-release --target cpu_benchmark
+./build-release/cpu_benchmark --warmup 5 --iterations 20 \
+  --vector-size 1048576 --matrix-size 128 \
+  --output cpu-benchmark.json
+```
+
+The JSON report has a versioned schema and records compiler, C++ language level,
+build mode, hardware thread count, workload sizes, warmup/repetition counts,
+measurement scope and minimum/median/mean/maximum milliseconds. All three
+workloads are verified before timing. Allocation, input generation, verification
+and JSON serialization are excluded from timed regions. Each sample covers one
+CPU reference call; the benchmark does not claim an end-to-end application rate.
+
+For comparisons, use the same executable, workload flags, machine power mode and
+idle conditions. Record OS and CPU model externally because portable C++17 does
+not expose reliable identifiers. Run several processes and compare medians rather
+than treating one run as a universal result. The benchmark intentionally does not
+mix CPU timings with the CUDA executables or calculate a speedup.
+
 ## CUDA setup (validation pending)
 
 Requires an existing NVIDIA CUDA toolkit, compatible driver and GPU. This task
@@ -146,6 +171,21 @@ rotations were completed before the matrix-multiplication milestone below.
   compute-sanitizer, GPU correctness and measurements remain pending because no
   CUDA compiler or NVIDIA GPU tooling was available; no GPU result is claimed.
 
-Next portfolio milestone: add reproducible physics-state tests and a headless
-simulation path alongside the existing pendulum visualization. CUDA runtime
-validation remains queued for the first available free NVIDIA environment.
+## CPU benchmark reporting milestone — October 13, 2026
+
+- Added a dependency-free C++17 benchmark for vector addition, reduction and
+  square matrix multiplication with deterministic inputs and pre-timing checks.
+- Added versioned JSON output, warmup/repetition controls, workload bounds,
+  steady-clock timing summaries and portable compiler/build/thread metadata.
+- Added unit coverage for statistics, invalid samples and JSON escaping. CPU CI
+  builds the benchmark, runs a small boundary workload and parses/asserts the
+  generated JSON schema.
+- Local compilation was unavailable during this session because the execution
+  environment could not be reached. Publication therefore requires the task-owned
+  branch CI to pass before this commit is advanced to `main`.
+- NVCC, compute-sanitizer, GPU correctness and measurements remain pending. No GPU
+  result is claimed.
+
+Next portfolio milestone: add numeric tensor primitives and finite-difference
+gradient checks to the C++ autograd engine. CUDA GPU validation remains queued for
+the first available free NVIDIA environment.
