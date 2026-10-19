@@ -167,7 +167,7 @@ std::string make_report(const Options& options,
            << "  },\n"
            << "  \"methodology\": {\n"
            << "    \"timer\": \"std::chrono::steady_clock\",\n"
-           << "    \"scope\": \"CPU function call only; input allocation and correctness verification excluded\",\n"
+           << "    \"scope\": \"CPU reference call; vector/matrix result allocation, checksum traversal and destruction included; input allocation, correctness verification and report serialization excluded\",\n"
            << "    \"warmup_iterations\": " << options.warmup << ",\n"
            << "    \"measured_iterations\": " << options.iterations << "\n"
            << "  },\n"

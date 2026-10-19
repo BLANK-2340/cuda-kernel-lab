@@ -39,9 +39,18 @@ cmake --build build-release --target cpu_benchmark
 The JSON report has a versioned schema and records compiler, C++ language level,
 build mode, hardware thread count, workload sizes, warmup/repetition counts,
 measurement scope and minimum/median/mean/maximum milliseconds. All three
-workloads are verified before timing. Allocation, input generation, verification
-and JSON serialization are excluded from timed regions. Each sample covers one
-CPU reference call; the benchmark does not claim an end-to-end application rate.
+workloads are verified before timing. Input allocation, input generation,
+verification and JSON serialization are excluded from timed regions. Vector-add
+and matrix samples include the reference call's result allocation, a full checksum
+traversal and result destruction; reduction samples include the scalar-returning
+reference call. These are deliberately not allocation-free kernel timings. The
+benchmark does not claim an end-to-end application rate or CPU/GPU speedup.
+
+Executable-level report and error-path checks use only the Python standard library:
+
+```sh
+python3 tests/cpu_benchmark_cli_test.py ./build-release/cpu_benchmark
+```
 
 For comparisons, use the same executable, workload flags, machine power mode and
 idle conditions. Record OS and CPU model externally because portable C++17 does
@@ -189,3 +198,29 @@ rotations were completed before the matrix-multiplication milestone below.
 Next portfolio milestone: add numeric tensor primitives and finite-difference
 gradient checks to the C++ autograd engine. CUDA GPU validation remains queued for
 the first available free NVIDIA environment.
+
+## CPU measurement-scope correction — October 19, 2026
+
+- Corrected the JSON and documentation: vector/matrix timings include result
+  allocation, checksum traversal and destruction. No timing boundaries or kernels
+  changed, and schema version 1 and its existing field structure are preserved.
+- Added four standard-library Python executable-contract tests: empty/singleton/
+  boundary reports, finite and ordered statistics, metadata, file output (including
+  spaces), open failure, help and twelve invalid-argument cases. CI runs these
+  against its compiled benchmark.
+- GCC 13.3.0 strict-warning Release builds passed for all four C++ tests, the CPU
+  demo and benchmark. All tests and the demo passed. All four C++ tests and all
+  four CLI tests also passed with AddressSanitizer/UndefinedBehaviorSanitizer;
+  leak detection was disabled because of the previously documented environment
+  limitation. The CLI regression checks deliberately reject the previous report's
+  inaccurate scope description.
+- CMake/CTest, NVCC, NVIDIA GPU execution and compute-sanitizer remain unavailable
+  locally. Remote CI still requires separate confirmation. No GPU measurements,
+  CPU/GPU comparisons or new performance conclusions are published here.
+
+Next CUDA milestone: add an explicitly caller-owned output-buffer CPU reference
+and separately scoped benchmark if allocation-free comparisons are needed; retain
+the current allocating-call measurements under their accurate scope. The C++
+rotation has already progressed through tensor primitives, classification loss,
+row broadcasting and deterministic multiclass training (latest commit
+`75f0673e7998598c5b014d92157a297fe57124b6`); do not rebuild those milestones.
