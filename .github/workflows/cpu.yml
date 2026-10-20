@@ -10,6 +10,8 @@ jobs:
       - run: ctest --test-dir build --output-on-failure
       - name: CPU benchmark executable contract
         run: python3 tests/cpu_benchmark_cli_test.py ./build/cpu_benchmark
+      - name: Multi-process CPU report validation
+        run: python3 -W error tests/cpu_suite_test.py
       - run: |
           g++ -std=c++17 -Wall -Wextra -Werror -pedantic -fsanitize=address,undefined -I include tests/reference_test.cpp -o /tmp/reference_test
           /tmp/reference_test

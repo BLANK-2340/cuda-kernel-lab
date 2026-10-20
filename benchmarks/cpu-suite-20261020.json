@@ -1,0 +1,505 @@
+{
+  "build": {
+    "argv": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-O2",
+      "-DNDEBUG",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-pedantic",
+      "-I",
+      "/workspace/scratch/38a14a2439ce/cuda-reports-evening20/include",
+      "/workspace/scratch/38a14a2439ce/cuda-reports-evening20/benchmarks/cpu_benchmark.cpp",
+      "-o",
+      "/tmp/kernel-lab-cpu-fqj0hlxy/cpu_benchmark"
+    ],
+    "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+    "executable_sha256": "89a6e3b2d426eab49ae5d31635b1ecf1ac326053ea296fd43894461801f57724",
+    "input_sha256": {
+      "benchmarks/cpu_benchmark.cpp": "237a36eda53ae7deddc163fdbec852d038aa70c42e938485597dcee2398aa6fd",
+      "include/kernel_lab/benchmark.hpp": "3b54eb0cac9aa3156e9186357e11cbe5d629297cee44be39b3e51a348b5a7b4f",
+      "include/kernel_lab/preallocated.hpp": "7753c7fa03a5c6542602c0cd4a4452be30588722f1c0ff0754a88f90fc77e298",
+      "include/kernel_lab/reference.hpp": "679e8737e734cb89923535b7916efa4cee8ac1257bdc255020312e0b5fdb3596"
+    },
+    "runner_sha256": "2ec317d65615e948f3c3bdc90b0c2b26b8f7c2e4ee4fe7d2999fe9c2441c7344"
+  },
+  "collected_utc": "2026-10-20T13:59:08.529204+00:00",
+  "host": {
+    "logical_cpus": 9,
+    "machine": "x86_64",
+    "processor": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "python": "3.12.14",
+    "release": "6.18.55",
+    "system": "Linux"
+  },
+  "limitations": [
+    "Single host; no CPU affinity, thermal or power control",
+    "Allocating and preallocated modes have different scopes; no kernel speedup claim",
+    "Shared inputs and checksum traversal can warm caches",
+    "Temporary build paths record exact argv but no longer exist after collection",
+    "CPU only; GPU correctness and measurements remain pending"
+  ],
+  "protocol": {
+    "aggregation": "median and sample standard deviation of process medians",
+    "execution": "serial alternating mode order",
+    "processes_per_mode": 3
+  },
+  "records": [
+    {
+      "argv": [
+        "/tmp/kernel-lab-cpu-fqj0hlxy/cpu_benchmark",
+        "--warmup",
+        "3",
+        "--iterations",
+        "20",
+        "--vector-size",
+        "65537",
+        "--matrix-size",
+        "64"
+      ],
+      "mode": "allocating",
+      "pair": 0,
+      "report": {
+        "benchmarks": {
+          "matrix_multiply": {
+            "columns": 64,
+            "inner": 64,
+            "maximum_ms": 0.399176,
+            "mean_ms": 0.2129123,
+            "median_ms": 0.182015,
+            "minimum_ms": 0.174517,
+            "rows": 64
+          },
+          "reduction": {
+            "elements": 65537,
+            "maximum_ms": 0.120247,
+            "mean_ms": 0.0512282,
+            "median_ms": 0.0452915,
+            "minimum_ms": 0.043768
+          },
+          "vector_add": {
+            "elements": 65537,
+            "maximum_ms": 0.295796,
+            "mean_ms": 0.09344335,
+            "median_ms": 0.0778625,
+            "minimum_ms": 0.077075
+          }
+        },
+        "correctness_verified": true,
+        "limitations": [
+          "Results describe this CPU process only",
+          "GPU validation and measurements remain pending"
+        ],
+        "metadata": {
+          "build_mode": "release",
+          "compiler": "gcc",
+          "compiler_version": "13.3.0",
+          "cplusplus": 201703,
+          "hardware_threads": 9
+        },
+        "methodology": {
+          "measured_iterations": 20,
+          "mode": "allocating",
+          "scope": "CPU reference call; vector/matrix result allocation, checksum traversal and destruction included; input allocation, correctness verification and report serialization excluded",
+          "timer": "std::chrono::steady_clock",
+          "warmup_iterations": 3
+        },
+        "runtime": "cpu",
+        "schema_version": 1
+      }
+    },
+    {
+      "argv": [
+        "/tmp/kernel-lab-cpu-fqj0hlxy/cpu_benchmark",
+        "--warmup",
+        "3",
+        "--iterations",
+        "20",
+        "--vector-size",
+        "65537",
+        "--matrix-size",
+        "64",
+        "--preallocated"
+      ],
+      "mode": "preallocated",
+      "pair": 0,
+      "report": {
+        "benchmarks": {
+          "matrix_multiply": {
+            "columns": 64,
+            "inner": 64,
+            "maximum_ms": 0.238525,
+            "mean_ms": 0.18535915,
+            "median_ms": 0.1773965,
+            "minimum_ms": 0.177309,
+            "rows": 64
+          },
+          "reduction": {
+            "elements": 65537,
+            "maximum_ms": 0.25171,
+            "mean_ms": 0.06331535,
+            "median_ms": 0.043788,
+            "minimum_ms": 0.043765
+          },
+          "vector_add": {
+            "elements": 65537,
+            "maximum_ms": 0.099251,
+            "mean_ms": 0.0319314,
+            "median_ms": 0.027052,
+            "minimum_ms": 0.026095
+          }
+        },
+        "correctness_verified": true,
+        "limitations": [
+          "Results describe this CPU process only",
+          "GPU validation and measurements remain pending"
+        ],
+        "metadata": {
+          "build_mode": "release",
+          "compiler": "gcc",
+          "compiler_version": "13.3.0",
+          "cplusplus": 201703,
+          "hardware_threads": 9
+        },
+        "methodology": {
+          "measured_iterations": 20,
+          "mode": "preallocated",
+          "scope": "CPU reference call including shape/alias validation; all allocation, checksum traversal, destruction, correctness verification and report serialization excluded",
+          "timer": "std::chrono::steady_clock",
+          "warmup_iterations": 3
+        },
+        "runtime": "cpu",
+        "schema_version": 1
+      }
+    },
+    {
+      "argv": [
+        "/tmp/kernel-lab-cpu-fqj0hlxy/cpu_benchmark",
+        "--warmup",
+        "3",
+        "--iterations",
+        "20",
+        "--vector-size",
+        "65537",
+        "--matrix-size",
+        "64",
+        "--preallocated"
+      ],
+      "mode": "preallocated",
+      "pair": 1,
+      "report": {
+        "benchmarks": {
+          "matrix_multiply": {
+            "columns": 64,
+            "inner": 64,
+            "maximum_ms": 4.044154,
+            "mean_ms": 0.5384884,
+            "median_ms": 0.201764,
+            "minimum_ms": 0.171649,
+            "rows": 64
+          },
+          "reduction": {
+            "elements": 65537,
+            "maximum_ms": 0.150255,
+            "mean_ms": 0.0500834,
+            "median_ms": 0.045278,
+            "minimum_ms": 0.043769
+          },
+          "vector_add": {
+            "elements": 65537,
+            "maximum_ms": 0.045507,
+            "mean_ms": 0.02860285,
+            "median_ms": 0.026954,
+            "minimum_ms": 0.026121
+          }
+        },
+        "correctness_verified": true,
+        "limitations": [
+          "Results describe this CPU process only",
+          "GPU validation and measurements remain pending"
+        ],
+        "metadata": {
+          "build_mode": "release",
+          "compiler": "gcc",
+          "compiler_version": "13.3.0",
+          "cplusplus": 201703,
+          "hardware_threads": 9
+        },
+        "methodology": {
+          "measured_iterations": 20,
+          "mode": "preallocated",
+          "scope": "CPU reference call including shape/alias validation; all allocation, checksum traversal, destruction, correctness verification and report serialization excluded",
+          "timer": "std::chrono::steady_clock",
+          "warmup_iterations": 3
+        },
+        "runtime": "cpu",
+        "schema_version": 1
+      }
+    },
+    {
+      "argv": [
+        "/tmp/kernel-lab-cpu-fqj0hlxy/cpu_benchmark",
+        "--warmup",
+        "3",
+        "--iterations",
+        "20",
+        "--vector-size",
+        "65537",
+        "--matrix-size",
+        "64"
+      ],
+      "mode": "allocating",
+      "pair": 1,
+      "report": {
+        "benchmarks": {
+          "matrix_multiply": {
+            "columns": 64,
+            "inner": 64,
+            "maximum_ms": 0.44415,
+            "mean_ms": 0.23221255,
+            "median_ms": 0.2033465,
+            "minimum_ms": 0.174551,
+            "rows": 64
+          },
+          "reduction": {
+            "elements": 65537,
+            "maximum_ms": 0.291533,
+            "mean_ms": 0.0599337,
+            "median_ms": 0.0452935,
+            "minimum_ms": 0.043766
+          },
+          "vector_add": {
+            "elements": 65537,
+            "maximum_ms": 0.293524,
+            "mean_ms": 0.09849155,
+            "median_ms": 0.078109,
+            "minimum_ms": 0.077088
+          }
+        },
+        "correctness_verified": true,
+        "limitations": [
+          "Results describe this CPU process only",
+          "GPU validation and measurements remain pending"
+        ],
+        "metadata": {
+          "build_mode": "release",
+          "compiler": "gcc",
+          "compiler_version": "13.3.0",
+          "cplusplus": 201703,
+          "hardware_threads": 9
+        },
+        "methodology": {
+          "measured_iterations": 20,
+          "mode": "allocating",
+          "scope": "CPU reference call; vector/matrix result allocation, checksum traversal and destruction included; input allocation, correctness verification and report serialization excluded",
+          "timer": "std::chrono::steady_clock",
+          "warmup_iterations": 3
+        },
+        "runtime": "cpu",
+        "schema_version": 1
+      }
+    },
+    {
+      "argv": [
+        "/tmp/kernel-lab-cpu-fqj0hlxy/cpu_benchmark",
+        "--warmup",
+        "3",
+        "--iterations",
+        "20",
+        "--vector-size",
+        "65537",
+        "--matrix-size",
+        "64"
+      ],
+      "mode": "allocating",
+      "pair": 2,
+      "report": {
+        "benchmarks": {
+          "matrix_multiply": {
+            "columns": 64,
+            "inner": 64,
+            "maximum_ms": 0.564302,
+            "mean_ms": 0.27833195,
+            "median_ms": 0.2183845,
+            "minimum_ms": 0.174764,
+            "rows": 64
+          },
+          "reduction": {
+            "elements": 65537,
+            "maximum_ms": 0.154824,
+            "mean_ms": 0.05840335,
+            "median_ms": 0.043789,
+            "minimum_ms": 0.043763
+          },
+          "vector_add": {
+            "elements": 65537,
+            "maximum_ms": 0.456593,
+            "mean_ms": 0.1123959,
+            "median_ms": 0.075105,
+            "minimum_ms": 0.072318
+          }
+        },
+        "correctness_verified": true,
+        "limitations": [
+          "Results describe this CPU process only",
+          "GPU validation and measurements remain pending"
+        ],
+        "metadata": {
+          "build_mode": "release",
+          "compiler": "gcc",
+          "compiler_version": "13.3.0",
+          "cplusplus": 201703,
+          "hardware_threads": 9
+        },
+        "methodology": {
+          "measured_iterations": 20,
+          "mode": "allocating",
+          "scope": "CPU reference call; vector/matrix result allocation, checksum traversal and destruction included; input allocation, correctness verification and report serialization excluded",
+          "timer": "std::chrono::steady_clock",
+          "warmup_iterations": 3
+        },
+        "runtime": "cpu",
+        "schema_version": 1
+      }
+    },
+    {
+      "argv": [
+        "/tmp/kernel-lab-cpu-fqj0hlxy/cpu_benchmark",
+        "--warmup",
+        "3",
+        "--iterations",
+        "20",
+        "--vector-size",
+        "65537",
+        "--matrix-size",
+        "64",
+        "--preallocated"
+      ],
+      "mode": "preallocated",
+      "pair": 2,
+      "report": {
+        "benchmarks": {
+          "matrix_multiply": {
+            "columns": 64,
+            "inner": 64,
+            "maximum_ms": 0.419726,
+            "mean_ms": 0.2086602,
+            "median_ms": 0.177501,
+            "minimum_ms": 0.177309,
+            "rows": 64
+          },
+          "reduction": {
+            "elements": 65537,
+            "maximum_ms": 0.31365,
+            "mean_ms": 0.06841825,
+            "median_ms": 0.043781,
+            "minimum_ms": 0.043763
+          },
+          "vector_add": {
+            "elements": 65537,
+            "maximum_ms": 0.029208,
+            "mean_ms": 0.02790895,
+            "median_ms": 0.0277305,
+            "minimum_ms": 0.02705
+          }
+        },
+        "correctness_verified": true,
+        "limitations": [
+          "Results describe this CPU process only",
+          "GPU validation and measurements remain pending"
+        ],
+        "metadata": {
+          "build_mode": "release",
+          "compiler": "gcc",
+          "compiler_version": "13.3.0",
+          "cplusplus": 201703,
+          "hardware_threads": 9
+        },
+        "methodology": {
+          "measured_iterations": 20,
+          "mode": "preallocated",
+          "scope": "CPU reference call including shape/alias validation; all allocation, checksum traversal, destruction, correctness verification and report serialization excluded",
+          "timer": "std::chrono::steady_clock",
+          "warmup_iterations": 3
+        },
+        "runtime": "cpu",
+        "schema_version": 1
+      }
+    }
+  ],
+  "schema_version": 1,
+  "summary": {
+    "allocating": {
+      "matrix_multiply": {
+        "maximum_ms": 0.2183845,
+        "median_ms": 0.2033465,
+        "minimum_ms": 0.182015,
+        "process_medians_ms": [
+          0.182015,
+          0.2033465,
+          0.2183845
+        ],
+        "sample_stddev_ms": 0.01827527868688555
+      },
+      "reduction": {
+        "maximum_ms": 0.0452935,
+        "median_ms": 0.0452915,
+        "minimum_ms": 0.043789,
+        "process_medians_ms": [
+          0.0452915,
+          0.0452935,
+          0.043789
+        ],
+        "sample_stddev_ms": 0.0008680467057326646
+      },
+      "vector_add": {
+        "maximum_ms": 0.078109,
+        "median_ms": 0.0778625,
+        "minimum_ms": 0.075105,
+        "process_medians_ms": [
+          0.0778625,
+          0.078109,
+          0.075105
+        ],
+        "sample_stddev_ms": 0.0016677621982764776
+      }
+    },
+    "preallocated": {
+      "matrix_multiply": {
+        "maximum_ms": 0.201764,
+        "median_ms": 0.177501,
+        "minimum_ms": 0.1773965,
+        "process_medians_ms": [
+          0.1773965,
+          0.201764,
+          0.177501
+        ],
+        "sample_stddev_ms": 0.014038513367993537
+      },
+      "reduction": {
+        "maximum_ms": 0.045278,
+        "median_ms": 0.043788,
+        "minimum_ms": 0.043781,
+        "process_medians_ms": [
+          0.043788,
+          0.045278,
+          0.043781
+        ],
+        "sample_stddev_ms": 0.0008622797303273061
+      },
+      "vector_add": {
+        "maximum_ms": 0.0277305,
+        "median_ms": 0.027052,
+        "minimum_ms": 0.026954,
+        "process_medians_ms": [
+          0.027052,
+          0.026954,
+          0.0277305
+        ],
+        "sample_stddev_ms": 0.0004228708431660916
+      }
+    }
+  }
+}

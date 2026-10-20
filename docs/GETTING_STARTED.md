@@ -277,3 +277,65 @@ row broadcasting and deterministic multiclass training (latest commit
 Next concrete CUDA milestone: persist exact build/host metadata and controlled
 multi-process CPU reports before comparing timing distributions. Keep actual GPU
 correctness and measurement pending until a free NVIDIA runtime is available.
+
+## Multi-process CPU collection — October 20, 2026
+
+The standard-library Python collector builds the current C++ benchmark once with
+explicit C++17, `-O2`, `-DNDEBUG` and strict-warning flags. It launches three fresh
+processes per mode serially, alternating which mode runs first in each pair.
+Each process uses three warmups, twenty measured calls, 65537 vector elements and
+64x64 matrices by default. No third-party code, data or paid resources are used.
+
+```sh
+python3 benchmarks/cpu_suite.py --output /tmp/cpu-suite-new.json
+python3 -W error tests/cpu_suite_test.py
+```
+
+Choose a new output path each time: existing artifacts are never overwritten.
+The collector retains all six raw reports, exact build/run argument arrays,
+compiler version, SHA-256 hashes of the executable and build inputs, the runner
+hash, collection time, OS/kernel, architecture, logical CPU count and CPU model
+when exposed by the host. It deliberately omits hostname and account identity.
+Temporary build paths in the commands cease to exist after collection; rerun the
+collector to rebuild from recorded source inputs and flags.
+
+Aggregation reports the median and sample standard deviation of the three
+**process medians**, not a pooled per-call standard deviation or confidence
+interval. Mixed metadata, workloads, warmups, sample counts, timers or per-mode
+scopes, duplicate/missing process pairs, failed correctness checks and non-finite
+or unordered timing statistics are rejected before publication of an artifact.
+
+Actual CPU-only snapshot: `benchmarks/cpu-suite-20261020.json`, collected with
+GCC 13.3.0 on Linux/x86_64, reporting INTEL XEON PLATINUM 8573C and nine logical
+CPUs. The table rounds the persisted milliseconds to six decimal places.
+
+| Operation | Mode | Median of process medians (ms) | Sample SD (ms) |
+| --- | --- | ---: | ---: |
+| Vector addition | Allocating | 0.077863 | 0.001668 |
+| Vector addition | Preallocated | 0.027052 | 0.000423 |
+| Reduction | Allocating | 0.045291 | 0.000868 |
+| Reduction | Preallocated | 0.043788 | 0.000862 |
+| Matrix multiplication | Allocating | 0.203346 | 0.018275 |
+| Matrix multiplication | Preallocated | 0.177501 | 0.014039 |
+
+These are observations from one shared execution environment, not portable
+performance guarantees. The final snapshot was collected without another task
+build running concurrently, but affinity, clock/power state, thermal behavior,
+other host workloads and cache state were not controlled. The matrix variability
+is retained rather than hidden. Different allocation/checksum timing scopes mean
+mode ratios are **not kernel speedups**. Reduction executes the same code in both
+modes. No GPU or CPU/GPU comparison is measured or inferred.
+
+Verification: seven collector tests passed with warnings treated as errors,
+including an actual compile/four-process CLI test, overwrite protection and
+persisted-artifact/hash consistency. All five C++ test binaries, CPU demo and five
+existing CLI tests passed strict GCC builds; all five C++ test binaries passed
+ASan/UBSan with local leak detection disabled. Python bytecode compilation and
+diff checks passed. CI now runs the collector tests, but remote CI remains to be
+confirmed. CMake/CTest, NVCC, compute-sanitizer and actual GPU validation remain
+unavailable locally.
+
+Next concrete milestone: rotate to C++ multiclass model persistence and robust
+round-trip/invalid-format checks, after inspecting its latest continuity notes.
+Keep language work blocked only on the missing exact authorized repositories;
+do not put it into a different project. CUDA GPU validation remains pending.
