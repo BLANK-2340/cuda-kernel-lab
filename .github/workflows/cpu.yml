@@ -19,6 +19,8 @@ jobs:
           /tmp/matmul_test
           g++ -std=c++17 -Wall -Wextra -Werror -pedantic -fsanitize=address,undefined -I include tests/benchmark_test.cpp -o /tmp/benchmark_test
           /tmp/benchmark_test
+          g++ -std=c++17 -Wall -Wextra -Werror -pedantic -fsanitize=address,undefined -I include tests/preallocated_test.cpp -o /tmp/preallocated_test
+          /tmp/preallocated_test
       - name: Validate CPU benchmark JSON
         run: |
           ./build/cpu_benchmark --warmup 1 --iterations 2 --vector-size 257 --matrix-size 17 --output /tmp/cpu-benchmark.json

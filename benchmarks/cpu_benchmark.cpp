@@ -1,5 +1,6 @@
 #include "kernel_lab/benchmark.hpp"
 #include "kernel_lab/reference.hpp"
+#include "kernel_lab/preallocated.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -23,6 +24,7 @@ struct Options {
     std::size_t vector_size = 1u << 20;
     std::size_t matrix_size = 96;
     std::string output_path;
+    bool preallocated = false;
 };
 
 volatile double benchmark_sink = 0.0;
@@ -50,10 +52,14 @@ Options parse_options(int argc, char** argv) {
     Options options;
     for (int index = 1; index < argc; ++index) {
         const std::string option = argv[index];
+        if (option == "--preallocated") {
+            options.preallocated = true;
+            continue;
+        }
         if (option == "--help") {
             std::cout
                 << "Usage: cpu_benchmark [--warmup N] [--iterations N] "
-                   "[--vector-size N] [--matrix-size N] [--output FILE]\n";
+                   "[--vector-size N] [--matrix-size N] [--output FILE] [--preallocated]\n";
             std::exit(0);
         }
         if (index + 1 >= argc)
@@ -133,6 +139,30 @@ double vector_checksum(const std::vector<float>& values) {
     return checksum;
 }
 
+// Observe every result after stopping the timer. The caller owns the buffer;
+// sample storage is reserved before timing, and no timed reference allocates.
+template <typename Function>
+kernel_lab::TimingSummary measure_output(std::size_t warmup,
+                                         std::size_t iterations,
+                                         Function function,
+                                         const std::vector<float>& output) {
+    for (std::size_t index = 0; index < warmup; ++index) {
+        function();
+        benchmark_sink = benchmark_sink + vector_checksum(output);
+    }
+    std::vector<double> samples;
+    samples.reserve(iterations);
+    for (std::size_t index = 0; index < iterations; ++index) {
+        const auto start = std::chrono::steady_clock::now();
+        function();
+        const auto stop = std::chrono::steady_clock::now();
+        benchmark_sink = benchmark_sink + vector_checksum(output);
+        samples.push_back(
+            std::chrono::duration<double, std::milli>(stop - start).count());
+    }
+    return kernel_lab::summarize_milliseconds(std::move(samples));
+}
+
 void write_summary(std::ostream& output,
                    const kernel_lab::TimingSummary& summary,
                    const char* indentation) {
@@ -167,7 +197,12 @@ std::string make_report(const Options& options,
            << "  },\n"
            << "  \"methodology\": {\n"
            << "    \"timer\": \"std::chrono::steady_clock\",\n"
-           << "    \"scope\": \"CPU reference call; vector/matrix result allocation, checksum traversal and destruction included; input allocation, correctness verification and report serialization excluded\",\n"
+           << "    \"mode\": \"" << (options.preallocated ? "preallocated" : "allocating") << "\",\n"
+           << "    \"scope\": \""
+           << (options.preallocated
+                   ? "CPU reference call including shape/alias validation; all allocation, checksum traversal, destruction, correctness verification and report serialization excluded"
+                   : "CPU reference call; vector/matrix result allocation, checksum traversal and destruction included; input allocation, correctness verification and report serialization excluded")
+           << "\",\n"
            << "    \"warmup_iterations\": " << options.warmup << ",\n"
            << "    \"measured_iterations\": " << options.iterations << "\n"
            << "  },\n"
@@ -212,7 +247,11 @@ int main(int argc, char** argv) {
                 8.0f;
         }
 
-        const auto vector_output = kernel_lab::vector_add(lhs, rhs);
+        auto vector_output = options.preallocated
+            ? std::vector<float>(options.vector_size, std::numeric_limits<float>::quiet_NaN())
+            : kernel_lab::vector_add(lhs, rhs);
+        if (options.preallocated)
+            kernel_lab::vector_add_into(lhs, rhs, vector_output);
         require_vector_correct(lhs, rhs, vector_output);
         double expected_sum = 0.0;
         for (const float value : lhs) expected_sum += static_cast<double>(value);
@@ -231,14 +270,24 @@ int main(int argc, char** argv) {
                 static_cast<float>(static_cast<int>((index * 11 + 2) % 29) - 14) /
                 16.0f;
         }
-        const auto matrix_output = kernel_lab::matrix_multiply(
+        auto matrix_output = options.preallocated
+            ? std::vector<float>(matrix_elements, std::numeric_limits<float>::quiet_NaN())
+            : kernel_lab::matrix_multiply(
             matrix_lhs, matrix_rhs, options.matrix_size, options.matrix_size,
             options.matrix_size);
+        if (options.preallocated)
+            kernel_lab::matrix_multiply_into(
+                matrix_lhs, matrix_rhs, matrix_output, options.matrix_size,
+                options.matrix_size, options.matrix_size);
         require_matrix_correct(
             matrix_lhs, matrix_rhs, matrix_output, options.matrix_size);
 
         const auto vector_timing =
-            measure(options.warmup, options.iterations, [&] {
+            options.preallocated
+            ? measure_output(options.warmup, options.iterations, [&] {
+                kernel_lab::vector_add_into(lhs, rhs, vector_output);
+            }, vector_output)
+            : measure(options.warmup, options.iterations, [&] {
                 return vector_checksum(kernel_lab::vector_add(lhs, rhs));
             });
         const auto reduction_timing =
@@ -246,12 +295,22 @@ int main(int argc, char** argv) {
                 return kernel_lab::reduce_sum(lhs);
             });
         const auto matrix_timing =
-            measure(options.warmup, options.iterations, [&] {
+            options.preallocated
+            ? measure_output(options.warmup, options.iterations, [&] {
+                kernel_lab::matrix_multiply_into(
+                    matrix_lhs, matrix_rhs, matrix_output, options.matrix_size,
+                    options.matrix_size, options.matrix_size);
+            }, matrix_output)
+            : measure(options.warmup, options.iterations, [&] {
                 return vector_checksum(kernel_lab::matrix_multiply(
                     matrix_lhs, matrix_rhs, options.matrix_size,
                     options.matrix_size, options.matrix_size));
             });
 
+        if (options.preallocated) {
+            require_vector_correct(lhs, rhs, vector_output);
+            require_matrix_correct(matrix_lhs, matrix_rhs, matrix_output, options.matrix_size);
+        }
         const std::string report = make_report(
             options, vector_timing, reduction_timing, matrix_timing);
         if (options.output_path.empty()) {

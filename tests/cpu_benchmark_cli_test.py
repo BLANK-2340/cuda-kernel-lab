@@ -19,7 +19,7 @@ class BenchmarkCliTest(unittest.TestCase):
             check=False,
         )
 
-    def check_report(self, report, vector_size, matrix_size):
+    def check_report(self, report, vector_size, matrix_size, preallocated=False):
         self.assertEqual(report["schema_version"], 1)
         self.assertEqual(report["runtime"], "cpu")
         self.assertIs(report["correctness_verified"], True)
@@ -33,8 +33,14 @@ class BenchmarkCliTest(unittest.TestCase):
         self.assertEqual(methodology["warmup_iterations"], 0)
         self.assertEqual(methodology["measured_iterations"], 3)
         scope = methodology["scope"]
-        self.assertIn("result allocation, checksum traversal and destruction included", scope)
-        self.assertIn("correctness verification and report serialization excluded", scope)
+        self.assertEqual(methodology["mode"], "preallocated" if preallocated else "allocating")
+        if preallocated:
+            self.assertIn("including shape/alias validation", scope)
+            self.assertIn("all allocation, checksum traversal, destruction", scope)
+            self.assertIn("excluded", scope)
+        else:
+            self.assertIn("result allocation, checksum traversal and destruction included", scope)
+            self.assertIn("correctness verification and report serialization excluded", scope)
         results = report["benchmarks"]
         self.assertEqual(set(results), {"vector_add", "reduction", "matrix_multiply"})
         for name in ("vector_add", "reduction"):
@@ -83,6 +89,16 @@ class BenchmarkCliTest(unittest.TestCase):
             self.assertNotEqual(process.returncode, 0)
             self.assertEqual(process.stdout, "")
             self.assertIn("could not open output file", process.stderr)
+
+    def test_preallocated_reports(self):
+        for vector_size, matrix_size in ((0, 0), (1, 1), (257, 17)):
+            with self.subTest(vector_size=vector_size, matrix_size=matrix_size):
+                process = self.run_benchmark(
+                    "--preallocated", "--warmup", "0", "--iterations", "3",
+                    "--vector-size", str(vector_size), "--matrix-size", str(matrix_size),
+                )
+                self.assertEqual(process.returncode, 0, process.stderr)
+                self.check_report(json.loads(process.stdout), vector_size, matrix_size, True)
 
     def test_invalid_arguments_fail_without_a_report(self):
         cases = (

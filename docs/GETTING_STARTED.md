@@ -58,6 +58,36 @@ not expose reliable identifiers. Run several processes and compare medians rathe
 than treating one run as a universal result. The benchmark intentionally does not
 mix CPU timings with the CUDA executables or calculate a speedup.
 
+### Caller-owned output buffers
+
+`kernel_lab/preallocated.hpp` adds `vector_add_into(lhs, rhs, output)` and
+`matrix_multiply_into(lhs, rhs, output, m, k, n)`. Allocate the exact-sized output
+before calling. Successful calls do not allocate or resize it. Every shape and
+overflow check happens before writes. Vector addition permits exact input/output
+aliasing; matrix multiplication rejects output aliasing either input, including
+empty vectors. Matrix inputs may alias each other. Zero inner dimension writes
+zeros to the entire correctly sized output. Accumulation remains double.
+
+Use the same benchmark binary and workload controls for the separate mode:
+
+```sh
+./build-release/cpu_benchmark --preallocated --warmup 5 --iterations 20 \
+  --vector-size 1048576 --matrix-size 128 --output cpu-preallocated.json
+```
+
+The additive `methodology.mode` field distinguishes `preallocated` from the
+default `allocating` mode; schema version 1 and existing fields are retained.
+Preallocated vector/matrix samples include the CPU reference and its shape/alias
+checks, but exclude buffer allocation, checksum traversal, destruction and
+correctness checks. Every output is consumed after stopping the timer and checked
+before and after the complete measurement sequence. Reduction is unchanged in
+both modes: one scalar-returning reference call. Warmup, repeated timings,
+metadata and deterministic inputs are shared. Input/output data and post-timing
+checksums can warm caches, and clock-call overhead remains significant for tiny
+workloads. The two modes measure different scopes, not different algorithms;
+their ratio is not a kernel optimization or GPU speedup. No measured comparison
+is published in this milestone.
+
 ## CUDA setup (validation pending)
 
 Requires an existing NVIDIA CUDA toolkit, compatible driver and GPU. This task
@@ -224,3 +254,26 @@ the current allocating-call measurements under their accurate scope. The C++
 rotation has already progressed through tensor primitives, classification loss,
 row broadcasting and deterministic multiclass training (latest commit
 `75f0673e7998598c5b014d92157a297fe57124b6`); do not rebuild those milestones.
+
+## Preallocated CPU references — October 20, 2026
+
+- Added caller-owned vector/matrix output APIs in a new header, retaining the
+  existing allocating references unchanged. Added explicit shape, overflow and
+  alias behavior and a separate `--preallocated` benchmark mode.
+- Added arithmetic and rejection tests across nine vector boundary sizes,
+  twenty rectangular matrix shapes, a known nonuniform product, zero-column and
+  zero-inner dimensions, exact vector aliases, invalid matrix aliases, repeated
+  output reuse and all three dimension-overflow checks. A test-only new/delete
+  probe observes zero allocations during valid API calls.
+- GCC 13.3.0 strict-warning Release builds passed for five C++ test binaries,
+  the CPU demo and benchmark. Five CLI tests passed, including reports for both
+  modes with empty, singleton and boundary workloads. ASan/UBSan checks passed
+  for the C++ tests and CLI suite with local leak detection disabled, consistent
+  with the environment limitation documented above.
+- CMake/CTest, NVCC, GPU execution and compute-sanitizer are unavailable locally;
+  remote CI requires separate confirmation. No GPU or comparative performance
+  results are claimed. Original root README and CUDA sources are preserved.
+
+Next concrete CUDA milestone: persist exact build/host metadata and controlled
+multi-process CPU reports before comparing timing distributions. Keep actual GPU
+correctness and measurement pending until a free NVIDIA runtime is available.
