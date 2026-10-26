@@ -15,9 +15,10 @@ Required CPU tools: Python 3, a C++17 compiler, `git` and `tar`.
 
 The verifier exports committed `HEAD` with `git archive`, builds every CPU test,
 the demo and benchmark under strict release flags, and then runs five C++ tests,
-five black-box benchmark tests and seven collector tests. It also checks the
-published CPU report against current source hashes, compiles Python bytecode and
-reruns all C++ tests under AddressSanitizer/UndefinedBehaviorSanitizer. Leak
+five black-box benchmark tests, seven collector tests and five adversarial artifact
+tests. It also validates the published CPU report's strict schema, current source
+hashes, process identities and independently recomputed aggregates, compiles Python
+bytecode and reruns all C++ tests under AddressSanitizer/UndefinedBehaviorSanitizer. Leak
 detection is disabled because the execution environment blocks it.
 
 ## Runnable targets
@@ -27,6 +28,7 @@ detection is disabled because the execution environment blocks it.
 | CPU demo | `g++ -std=c++17 -O2 -I include examples/cpu_demo.cpp -o /tmp/cpu_demo && /tmp/cpu_demo` | Vector addition and reduction smoke path |
 | Single-process benchmark | `g++ -std=c++17 -O2 -DNDEBUG -I include benchmarks/cpu_benchmark.cpp -o /tmp/cpu_benchmark && /tmp/cpu_benchmark --warmup 5 --iterations 20 --vector-size 1048576 --matrix-size 128` | Verified CPU references with explicit timing scope |
 | Multi-process collection | `python3 benchmarks/cpu_suite.py --output /tmp/cpu-suite.json` | Alternating allocating/preallocated processes with raw reports, hashes and variability |
+| Validate committed evidence | `python3 benchmarks/validate_cpu_suite.py benchmarks/cpu-suite-20261020.json` | Bounded strict JSON, source hashes, process protocol and independent aggregates |
 | Complete CPU verification | `./scripts/verify_showcase.sh` | Clean committed archive, strict builds, CLI contracts, artifact consistency and sanitizers |
 | Optional CUDA benchmarks | See [CUDA setup](GETTING_STARTED.md#cuda-setup-validation-pending) | Requires an existing compatible NVIDIA toolkit and GPU; validation is pending |
 
@@ -57,6 +59,8 @@ is host-specific and does not imply portable performance.
 - [Getting started, methodology and milestone evidence](GETTING_STARTED.md)
 - [`cpu_suite.py`](../benchmarks/cpu_suite.py): controlled build and process
   collection with input/executable hashes
+- [`validate_cpu_suite.py`](../benchmarks/validate_cpu_suite.py): independent,
+  dependency-free persisted-evidence validator
 
 ## Known limitations
 
@@ -69,6 +73,5 @@ is host-specific and does not imply portable performance.
   measurements remain unvalidated because no NVIDIA runtime is available here.
 - No CPU/GPU speedup, end-to-end application rate or production claim is made.
 
-The next robustness milestone is a strict standalone validator for the committed
-CPU suite schema, hashes, process identities and aggregate statistics. GPU work
-remains pending actual CUDA access.
+The next portfolio milestone is clean-checkout showcase verification for the
+pendulum simulation while GPU work remains pending actual CUDA access.

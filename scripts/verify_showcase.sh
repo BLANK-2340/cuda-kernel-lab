@@ -28,6 +28,8 @@ test "$demo_output" = $'5 7 9 \nsum = 21'
   -o "$archive_root/build/cpu_benchmark"
 python3 -W error tests/cpu_benchmark_cli_test.py "$archive_root/build/cpu_benchmark"
 python3 -W error tests/cpu_suite_test.py
+python3 -W error tests/cpu_suite_artifact_test.py
+python3 -W error benchmarks/validate_cpu_suite.py benchmarks/cpu-suite-20261020.json
 python3 -m compileall -q benchmarks tests
 
 sanitizer_flags=(-std=c++17 -O1 -g -Wall -Wextra -Werror -pedantic

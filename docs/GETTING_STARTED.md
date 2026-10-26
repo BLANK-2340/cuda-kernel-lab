@@ -360,3 +360,22 @@ do not put it into a different project. CUDA GPU validation remains pending.
 Next concrete milestone: add a strict standalone validator for the committed CPU
 suite schema, source hashes, process pairs and aggregates. Keep GPU validation
 pending until an actual compatible CUDA runtime is available.
+
+## Standalone CPU evidence validation — October 26, 2026
+
+- Added a dependency-free validator that does not import the producing collector.
+  It bounds input size, rejects duplicate JSON keys and non-finite values, enforces
+  exact schemas, verifies normalized repository-relative source hashes and checks
+  that raw process identities follow the recorded alternating protocol.
+- Run arguments are checked against every report's workload, mode and iteration
+  counts. Timing fields must be finite, non-negative and ordered. Process medians,
+  median-of-medians, sample standard deviation and extrema are recomputed from raw
+  records instead of trusting the persisted summary.
+- Five adversarial tests cover the committed artifact and CLI, duplicate/non-finite
+  JSON, path traversal and hash tampering, duplicate/reordered process identities,
+  argument/report mismatches, malformed timings, summary tampering and unexpected
+  identity fields. The clean-archive verifier and CPU CI run both tests and CLI.
+
+Next concrete milestone: rotate to the pendulum simulation for clean-checkout
+showcase verification and an evidence index. CUDA compilation, GPU correctness,
+compute-sanitizer and GPU measurements remain pending an actual compatible runtime.
