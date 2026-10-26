@@ -4,6 +4,9 @@ Original educational C++17 CPU references and optional CUDA vector-add,
 reduction and tiled-matrix benchmarks. The existing root README is preserved. No downloaded data or external
 CPU dependencies are required.
 
+For the concise setup, runnable-target, measured-result and limitation index,
+see [SHOWCASE.md](SHOWCASE.md).
+
 ## CPU setup and demo
 
 ```sh
@@ -339,3 +342,21 @@ Next concrete milestone: rotate to C++ multiclass model persistence and robust
 round-trip/invalid-format checks, after inspecting its latest continuity notes.
 Keep language work blocked only on the missing exact authorized repositories;
 do not put it into a different project. CUDA GPU validation remains pending.
+
+## Clean-checkout showcase verification — October 26, 2026
+
+- Added a one-command verifier that exports committed `HEAD`, performs strict
+  release builds, runs all five C++ tests, five executable-contract tests and
+  seven collector tests, checks the committed CPU suite and compiles bytecode.
+- The same isolated archive reruns all C++ tests with AddressSanitizer and
+  UndefinedBehaviorSanitizer; leak detection remains disabled because the local
+  environment blocks it.
+- Added a compact evidence-backed showcase index with exact setup/demo commands,
+  the recorded one-host CPU snapshot, architecture links and explicit limits.
+- Local validation used GCC 13.3.0 and Python 3.12.14. CMake, NVCC, NVIDIA GPU
+  execution and compute-sanitizer remained unavailable; no GPU result or speedup
+  claim was added.
+
+Next concrete milestone: add a strict standalone validator for the committed CPU
+suite schema, source hashes, process pairs and aggregates. Keep GPU validation
+pending until an actual compatible CUDA runtime is available.

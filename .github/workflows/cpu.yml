@@ -44,3 +44,5 @@ jobs:
               for key in ("minimum_ms", "median_ms", "mean_ms", "maximum_ms"):
                   assert isinstance(result[key], (int, float)) and result[key] >= 0
           PY
+      - name: Verify clean committed showcase
+        run: ./scripts/verify_showcase.sh
